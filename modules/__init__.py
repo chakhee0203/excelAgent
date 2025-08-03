@@ -60,17 +60,17 @@ __author__ = "Excel智能助手"
 
 # 导出所有功能函数
 __all__ = [
-    # 配置相关
+    # 配置模块
     'setup_page_config',
     'load_custom_css', 
     'get_default_models',
     'load_config',
     'save_config',
     
-    # Excel代理
+    # Excel代理模块
     'ExcelAgentFull',
     
-    # 核心分析功能
+    # 核心分析模块
     'ai_analysis_section',
     'natural_language_section',
     'chart_generation_section',
