@@ -9,6 +9,18 @@ from datetime import datetime, timedelta
 import math
 from scipy import stats
 
+# 尝试导入Plotly相关模块
+try:
+    import plotly.express as px
+    import plotly.graph_objects as go
+    import plotly.figure_factory as ff
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    PLOTLY_AVAILABLE = False
+    px = None
+    go = None
+    ff = None
+
 def data_security_section(df: pd.DataFrame):
     """数据安全功能"""
     st.markdown('<h2 class="sub-header">🔒 数据安全</h2>', unsafe_allow_html=True)
@@ -487,21 +499,26 @@ def mathematical_functions_section(df: pd.DataFrame):
                     
                     with col1:
                         # 直方图
-                        import plotly.express as px
-                        fig_hist = px.histogram(
-                            x=data,
-                            title=f"{col} 分布直方图",
-                            nbins=30
-                        )
-                        st.plotly_chart(fig_hist, use_container_width=True)
+                        if PLOTLY_AVAILABLE:
+                            fig_hist = px.histogram(
+                                x=data,
+                                title=f"{col} 分布直方图",
+                                nbins=30
+                            )
+                            st.plotly_chart(fig_hist, use_container_width=True)
+                        else:
+                            st.warning("⚠️ Plotly未安装，无法显示直方图")
                     
                     with col2:
                         # 箱线图
-                        fig_box = px.box(
-                            y=data,
-                            title=f"{col} 箱线图"
-                        )
-                        st.plotly_chart(fig_box, use_container_width=True)
+                        if PLOTLY_AVAILABLE:
+                            fig_box = px.box(
+                                y=data,
+                                title=f"{col} 箱线图"
+                            )
+                            st.plotly_chart(fig_box, use_container_width=True)
+                        else:
+                            st.warning("⚠️ Plotly未安装，无法显示箱线图")
         
         elif stat_function == "置信区间":
             selected_col = st.selectbox("选择分析列", numeric_cols)
@@ -553,44 +570,45 @@ def mathematical_functions_section(df: pd.DataFrame):
                 )
                 
                 # 可视化置信区间
-                import plotly.graph_objects as go
-                
-                fig = go.Figure()
-                
-                # 添加数据点
-                fig.add_trace(go.Scatter(
-                    x=list(range(len(data))),
-                    y=data,
-                    mode='markers',
-                    name='数据点',
-                    marker=dict(color='lightblue')
-                ))
-                
-                # 添加均值线
-                fig.add_hline(
-                    y=mean,
-                    line_dash="dash",
-                    line_color="red",
-                    annotation_text=f"均值: {mean:.4f}"
-                )
-                
-                # 添加置信区间
-                fig.add_hrect(
-                    y0=ci_lower,
-                    y1=ci_upper,
-                    fillcolor="rgba(255, 0, 0, 0.2)",
-                    layer="below",
-                    line_width=0,
-                    annotation_text=f"{confidence_level:.0%} 置信区间"
-                )
-                
-                fig.update_layout(
-                    title=f"{selected_col} 置信区间可视化",
-                    xaxis_title="数据点索引",
-                    yaxis_title="数值"
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
+                if PLOTLY_AVAILABLE:
+                    fig = go.Figure()
+                    
+                    # 添加数据点
+                    fig.add_trace(go.Scatter(
+                        x=list(range(len(data))),
+                        y=data,
+                        mode='markers',
+                        name='数据点',
+                        marker=dict(color='lightblue')
+                    ))
+                    
+                    # 添加均值线
+                    fig.add_hline(
+                        y=mean,
+                        line_dash="dash",
+                        line_color="red",
+                        annotation_text=f"均值: {mean:.4f}"
+                    )
+                    
+                    # 添加置信区间
+                    fig.add_hrect(
+                        y0=ci_lower,
+                        y1=ci_upper,
+                        fillcolor="rgba(255, 0, 0, 0.2)",
+                        layer="below",
+                        line_width=0,
+                        annotation_text=f"{confidence_level:.0%} 置信区间"
+                    )
+                    
+                    fig.update_layout(
+                        title=f"{selected_col} 置信区间可视化",
+                        xaxis_title="数据点索引",
+                        yaxis_title="数值"
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.warning("⚠️ Plotly未安装，无法显示置信区间可视化")
     
     elif function_category == "概率分布":
         st.markdown("### 概率分布")
@@ -646,66 +664,70 @@ def mathematical_functions_section(df: pd.DataFrame):
                     st.warning("⚠️ 数据可能不服从正态分布 (p ≤ 0.05)")
                 
                 # 可视化
-                import plotly.figure_factory as ff
-                
-                # Q-Q图
-                fig_qq = go.Figure()
-                
-                # 理论分位数
-                theoretical_quantiles = stats.norm.ppf(np.linspace(0.01, 0.99, len(data)))
-                sample_quantiles = np.sort(data)
-                
-                fig_qq.add_trace(go.Scatter(
-                    x=theoretical_quantiles,
-                    y=sample_quantiles,
-                    mode='markers',
-                    name='数据点'
-                ))
-                
-                # 理想直线
-                fig_qq.add_trace(go.Scatter(
-                    x=theoretical_quantiles,
-                    y=theoretical_quantiles * std + mean,
-                    mode='lines',
-                    name='理想正态分布',
-                    line=dict(color='red', dash='dash')
-                ))
-                
-                fig_qq.update_layout(
-                    title="Q-Q图 (正态性检验)",
-                    xaxis_title="理论分位数",
-                    yaxis_title="样本分位数"
-                )
-                
-                st.plotly_chart(fig_qq, use_container_width=True)
+                if PLOTLY_AVAILABLE:
+                    # Q-Q图
+                    fig_qq = go.Figure()
+                    
+                    # 理论分位数
+                    theoretical_quantiles = stats.norm.ppf(np.linspace(0.01, 0.99, len(data)))
+                    sample_quantiles = np.sort(data)
+                    
+                    fig_qq.add_trace(go.Scatter(
+                        x=theoretical_quantiles,
+                        y=sample_quantiles,
+                        mode='markers',
+                        name='数据点'
+                    ))
+                    
+                    # 理想直线
+                    fig_qq.add_trace(go.Scatter(
+                        x=theoretical_quantiles,
+                        y=theoretical_quantiles * std + mean,
+                        mode='lines',
+                        name='理想正态分布',
+                        line=dict(color='red', dash='dash')
+                    ))
+                    
+                    fig_qq.update_layout(
+                        title="Q-Q图 (正态性检验)",
+                        xaxis_title="理论分位数",
+                        yaxis_title="样本分位数"
+                    )
+                    
+                    st.plotly_chart(fig_qq, use_container_width=True)
+                else:
+                    st.error("⚠️ Plotly未安装，无法显示Q-Q图。请运行: pip install plotly")
                 
                 # 概率密度函数对比
-                x_range = np.linspace(data.min(), data.max(), 100)
-                theoretical_pdf = stats.norm.pdf(x_range, mean, std)
-                
-                fig_pdf = go.Figure()
-                
-                # 实际数据直方图
-                fig_pdf.add_trace(go.Histogram(
-                    x=data,
-                    histnorm='probability density',
-                    name='实际数据',
-                    opacity=0.7
-                ))
-                
-                # 理论正态分布
-                fig_pdf.add_trace(go.Scatter(
-                    x=x_range,
-                    y=theoretical_pdf,
-                    mode='lines',
-                    name='理论正态分布',
-                    line=dict(color='red', width=2)
-                ))
-                
-                fig_pdf.update_layout(
-                    title="概率密度函数对比",
-                    xaxis_title="数值",
-                    yaxis_title="概率密度"
-                )
-                
-                st.plotly_chart(fig_pdf, use_container_width=True)
+                if PLOTLY_AVAILABLE:
+                    x_range = np.linspace(data.min(), data.max(), 100)
+                    theoretical_pdf = stats.norm.pdf(x_range, mean, std)
+                    
+                    fig_pdf = go.Figure()
+                    
+                    # 实际数据直方图
+                    fig_pdf.add_trace(go.Histogram(
+                        x=data,
+                        histnorm='probability density',
+                        name='实际数据',
+                        opacity=0.7
+                    ))
+                    
+                    # 理论正态分布
+                    fig_pdf.add_trace(go.Scatter(
+                        x=x_range,
+                        y=theoretical_pdf,
+                        mode='lines',
+                        name='理论正态分布',
+                        line=dict(color='red', width=2)
+                    ))
+                    
+                    fig_pdf.update_layout(
+                        title="概率密度函数对比",
+                        xaxis_title="数值",
+                        yaxis_title="概率密度"
+                    )
+                    
+                    st.plotly_chart(fig_pdf, use_container_width=True)
+                else:
+                    st.error("⚠️ Plotly未安装，无法显示概率密度函数对比图。请运行: pip install plotly")

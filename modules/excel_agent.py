@@ -1,9 +1,20 @@
 import pandas as pd
 import streamlit as st
 from typing import Dict, List, Optional
-import plotly.express as px
-import plotly.graph_objects as go
 import numpy as np
+
+# 尝试导入Plotly相关模块
+try:
+    import plotly.express as px
+    import plotly.graph_objects as go
+    PLOTLY_AVAILABLE = True
+except ImportError as e:
+    PLOTLY_AVAILABLE = False
+    px = None
+    go = None
+    # 只在session state中记录错误，避免重复显示警告
+    if 'plotly_import_error' not in st.session_state:
+        st.session_state.plotly_import_error = str(e)
 
 # 尝试导入LangChain相关模块
 try:

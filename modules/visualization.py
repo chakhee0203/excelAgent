@@ -1,11 +1,20 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import seaborn as sns
 import matplotlib.pyplot as plt
+
+# 尝试导入Plotly相关模块
+try:
+    import plotly.express as px
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    PLOTLY_AVAILABLE = False
+    px = None
+    go = None
+    make_subplots = None
 
 
 def conditional_formatting_section(df: pd.DataFrame):
@@ -131,34 +140,43 @@ def conditional_formatting_section(df: pd.DataFrame):
                 )
                 
                 if st.button("生成热力图"):
-                    # 创建热力图
-                    correlation_matrix = df[selected_cols].corr()
-                    
-                    color_scales = {
-                        "红蓝渐变": "RdBu_r",
-                        "绿红渐变": "RdYlGn_r",
-                        "蓝白红": "coolwarm",
-                        "黄橙红": "YlOrRd"
-                    }
-                    
-                    fig = go.Figure(data=go.Heatmap(
-                        z=correlation_matrix.values,
-                        x=correlation_matrix.columns,
-                        y=correlation_matrix.columns,
-                        colorscale=color_scales[color_scheme],
-                        text=correlation_matrix.round(3).values,
-                        texttemplate="%{text}",
-                        textfont={"size": 10},
-                        hoverongaps=False
-                    ))
-                    
-                    fig.update_layout(
-                        title="数据相关性热力图",
-                        width=600,
-                        height=600
-                    )
-                    
-                    st.plotly_chart(fig, use_container_width=True)
+                    if PLOTLY_AVAILABLE:
+                        # 创建热力图
+                        correlation_matrix = df[selected_cols].corr()
+                        
+                        color_scales = {
+                            "红蓝渐变": "RdBu_r",
+                            "绿红渐变": "RdYlGn_r",
+                            "蓝白红": "coolwarm",
+                            "黄橙红": "YlOrRd"
+                        }
+                        
+                        fig = go.Figure(data=go.Heatmap(
+                            z=correlation_matrix.values,
+                            x=correlation_matrix.columns,
+                            y=correlation_matrix.columns,
+                            colorscale=color_scales[color_scheme],
+                            text=correlation_matrix.round(3).values,
+                            texttemplate="%{text}",
+                            textfont={"size": 10},
+                            hoverongaps=False
+                        ))
+                        
+                        fig.update_layout(
+                            title="数据相关性热力图",
+                            width=600,
+                            height=600
+                        )
+                        
+                        st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.error("⚠️ Plotly未安装，无法显示交互式热力图。请运行: pip install plotly")
+                        # 使用matplotlib作为备选
+                        correlation_matrix = df[selected_cols].corr()
+                        fig, ax = plt.subplots(figsize=(10, 8))
+                        sns.heatmap(correlation_matrix, annot=True, cmap='RdBu_r', ax=ax)
+                        ax.set_title("数据相关性热力图")
+                        st.pyplot(fig)
                     
                     # 数值热力图
                     st.markdown("#### 数值分布热力图")

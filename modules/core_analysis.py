@@ -1,10 +1,18 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
 from typing import Optional
 from .excel_agent import ExcelAgentFull
+
+# 尝试导入Plotly相关模块
+try:
+    import plotly.express as px
+    import plotly.graph_objects as go
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    PLOTLY_AVAILABLE = False
+    px = None
+    go = None
 
 def ai_analysis_section(df: pd.DataFrame, agent: Optional[ExcelAgentFull]):
     """AI智能分析功能"""
@@ -195,8 +203,12 @@ def chart_generation_section(df: pd.DataFrame, agent: Optional[ExcelAgentFull]):
                 y_col = st.selectbox("选择Y轴（数值）", numeric_cols)
                 
                 if st.button("生成柱状图"):
-                    fig = px.bar(df, x=x_col, y=y_col, title=f"{y_col} by {x_col}")
-                    st.plotly_chart(fig, use_container_width=True)
+                    if not PLOTLY_AVAILABLE:
+                        st.error("❌ Plotly未安装，无法生成交互式图表")
+                        st.info("💡 请运行以下命令安装Plotly: pip install plotly")
+                    else:
+                        fig = px.bar(df, x=x_col, y=y_col, title=f"{y_col} by {x_col}")
+                        st.plotly_chart(fig, use_container_width=True)
         
         elif chart_type == "折线图":
             if numeric_cols:
@@ -207,8 +219,12 @@ def chart_generation_section(df: pd.DataFrame, agent: Optional[ExcelAgentFull]):
                 y_col = st.selectbox("选择Y轴", numeric_cols)
                 
                 if st.button("生成折线图"):
-                    fig = px.line(df, x=x_col, y=y_col, title=f"{y_col} over {x_col}")
-                    st.plotly_chart(fig, use_container_width=True)
+                    if not PLOTLY_AVAILABLE:
+                        st.error("❌ Plotly未安装，无法生成交互式图表")
+                        st.info("💡 请运行以下命令安装Plotly: pip install plotly")
+                    else:
+                        fig = px.line(df, x=x_col, y=y_col, title=f"{y_col} over {x_col}")
+                        st.plotly_chart(fig, use_container_width=True)
         
         elif chart_type == "散点图":
             if len(numeric_cols) >= 2:
@@ -222,19 +238,27 @@ def chart_generation_section(df: pd.DataFrame, agent: Optional[ExcelAgentFull]):
                         color_col = st.selectbox("选择颜色分组列", categorical_cols)
                 
                 if st.button("生成散点图"):
-                    fig = px.scatter(df, x=x_col, y=y_col, color=color_col, 
-                                   title=f"{y_col} vs {x_col}")
-                    st.plotly_chart(fig, use_container_width=True)
+                    if not PLOTLY_AVAILABLE:
+                        st.error("❌ Plotly未安装，无法生成交互式图表")
+                        st.info("💡 请运行以下命令安装Plotly: pip install plotly")
+                    else:
+                        fig = px.scatter(df, x=x_col, y=y_col, color=color_col, 
+                                       title=f"{y_col} vs {x_col}")
+                        st.plotly_chart(fig, use_container_width=True)
         
         elif chart_type == "饼图":
             if categorical_cols:
                 cat_col = st.selectbox("选择分类列", categorical_cols)
                 
                 if st.button("生成饼图"):
-                    value_counts = df[cat_col].value_counts()
-                    fig = px.pie(values=value_counts.values, names=value_counts.index,
-                               title=f"{cat_col} 分布")
-                    st.plotly_chart(fig, use_container_width=True)
+                    if not PLOTLY_AVAILABLE:
+                        st.error("❌ Plotly未安装，无法生成交互式图表")
+                        st.info("💡 请运行以下命令安装Plotly: pip install plotly")
+                    else:
+                        value_counts = df[cat_col].value_counts()
+                        fig = px.pie(values=value_counts.values, names=value_counts.index,
+                                   title=f"{cat_col} 分布")
+                        st.plotly_chart(fig, use_container_width=True)
         
         elif chart_type == "直方图":
             if numeric_cols:
@@ -242,8 +266,12 @@ def chart_generation_section(df: pd.DataFrame, agent: Optional[ExcelAgentFull]):
                 bins = st.slider("直方图分组数", 10, 100, 30)
                 
                 if st.button("生成直方图"):
-                    fig = px.histogram(df, x=col, nbins=bins, title=f"{col} 分布")
-                    st.plotly_chart(fig, use_container_width=True)
+                    if not PLOTLY_AVAILABLE:
+                        st.error("❌ Plotly未安装，无法生成交互式图表")
+                        st.info("💡 请运行以下命令安装Plotly: pip install plotly")
+                    else:
+                        fig = px.histogram(df, x=col, nbins=bins, title=f"{col} 分布")
+                        st.plotly_chart(fig, use_container_width=True)
         
         elif chart_type == "箱线图":
             if numeric_cols:
@@ -256,8 +284,12 @@ def chart_generation_section(df: pd.DataFrame, agent: Optional[ExcelAgentFull]):
                         x_col = st.selectbox("选择分组列", categorical_cols)
                 
                 if st.button("生成箱线图"):
-                    fig = px.box(df, x=x_col, y=y_col, title=f"{y_col} 箱线图")
-                    st.plotly_chart(fig, use_container_width=True)
+                    if not PLOTLY_AVAILABLE:
+                        st.error("❌ Plotly未安装，无法生成交互式图表")
+                        st.info("💡 请运行以下命令安装Plotly: pip install plotly")
+                    else:
+                        fig = px.box(df, x=x_col, y=y_col, title=f"{y_col} 箱线图")
+                        st.plotly_chart(fig, use_container_width=True)
         
         elif chart_type == "热力图":
             if len(numeric_cols) >= 2:
@@ -268,33 +300,41 @@ def chart_generation_section(df: pd.DataFrame, agent: Optional[ExcelAgentFull]):
                 )
                 
                 if selected_cols and st.button("生成热力图"):
-                    corr_matrix = df[selected_cols].corr()
-                    fig = px.imshow(corr_matrix, 
-                                  title="相关性热力图",
-                                  color_continuous_scale="RdBu_r")
-                    st.plotly_chart(fig, use_container_width=True)
+                    if not PLOTLY_AVAILABLE:
+                        st.error("❌ Plotly未安装，无法生成交互式图表")
+                        st.info("💡 请运行以下命令安装Plotly: pip install plotly")
+                    else:
+                        corr_matrix = df[selected_cols].corr()
+                        fig = px.imshow(corr_matrix, 
+                                      title="相关性热力图",
+                                      color_continuous_scale="RdBu_r")
+                        st.plotly_chart(fig, use_container_width=True)
         
         elif chart_type == "相关性矩阵":
             if len(numeric_cols) >= 2:
                 if st.button("生成相关性矩阵"):
-                    corr_matrix = df[numeric_cols].corr()
-                    
-                    # 使用plotly创建交互式相关性矩阵
-                    fig = go.Figure(data=go.Heatmap(
-                        z=corr_matrix.values,
-                        x=corr_matrix.columns,
-                        y=corr_matrix.columns,
-                        colorscale='RdBu_r',
-                        zmid=0
-                    ))
-                    
-                    fig.update_layout(
-                        title="数值列相关性矩阵",
-                        xaxis_title="变量",
-                        yaxis_title="变量"
-                    )
-                    
-                    st.plotly_chart(fig, use_container_width=True)
+                    if not PLOTLY_AVAILABLE:
+                        st.error("❌ Plotly未安装，无法生成交互式图表")
+                        st.info("💡 请运行以下命令安装Plotly: pip install plotly")
+                    else:
+                        corr_matrix = df[numeric_cols].corr()
+                        
+                        # 使用plotly创建交互式相关性矩阵
+                        fig = go.Figure(data=go.Heatmap(
+                            z=corr_matrix.values,
+                            x=corr_matrix.columns,
+                            y=corr_matrix.columns,
+                            colorscale='RdBu_r',
+                            zmid=0
+                        ))
+                        
+                        fig.update_layout(
+                            title="数值列相关性矩阵",
+                            xaxis_title="变量",
+                            yaxis_title="变量"
+                        )
+                        
+                        st.plotly_chart(fig, use_container_width=True)
                     
                     # 显示强相关性对
                     st.markdown("### 强相关性分析")
@@ -435,34 +475,37 @@ def machine_learning_section(df: pd.DataFrame, agent: Optional[ExcelAgentFull]):
                 st.metric("MSE", f"{mse:.4f}", help="均方误差，越小越好")
             
             # 预测vs实际值图表
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=y_test,
-                y=y_pred,
-                mode='markers',
-                name='预测值',
-                marker=dict(color='blue', size=8)
-            ))
-            
-            # 添加理想线
-            min_val = min(min(y_test), min(y_pred))
-            max_val = max(max(y_test), max(y_pred))
-            fig.add_trace(go.Scatter(
-                x=[min_val, max_val],
-                y=[min_val, max_val],
-                mode='lines',
-                name='理想预测线',
-                line=dict(color='red', dash='dash')
-            ))
-            
-            fig.update_layout(
-                title="预测值 vs 实际值",
-                xaxis_title="实际值",
-                yaxis_title="预测值",
-                height=500
-            )
-            
-            st.plotly_chart(fig, use_container_width=True)
+            if PLOTLY_AVAILABLE:
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(
+                    x=y_test,
+                    y=y_pred,
+                    mode='markers',
+                    name='预测值',
+                    marker=dict(color='blue', size=8)
+                ))
+                
+                # 添加理想线
+                min_val = min(min(y_test), min(y_pred))
+                max_val = max(max(y_test), max(y_pred))
+                fig.add_trace(go.Scatter(
+                    x=[min_val, max_val],
+                    y=[min_val, max_val],
+                    mode='lines',
+                    name='理想预测线',
+                    line=dict(color='red', dash='dash')
+                ))
+                
+                fig.update_layout(
+                    title="预测值 vs 实际值",
+                    xaxis_title="实际值",
+                    yaxis_title="预测值",
+                    height=500
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.warning("⚠️ Plotly未安装，无法显示预测vs实际值图表")
             
             # 特征重要性（仅对树模型）
             if model_type in ["随机森林", "梯度提升"]:
@@ -473,14 +516,18 @@ def machine_learning_section(df: pd.DataFrame, agent: Optional[ExcelAgentFull]):
                     '重要性': model.feature_importances_
                 }).sort_values('重要性', ascending=False)
                 
-                fig_importance = px.bar(
-                    importance_df,
-                    x='重要性',
-                    y='特征',
-                    orientation='h',
-                    title="特征重要性排序"
-                )
-                st.plotly_chart(fig_importance, use_container_width=True)
+                if PLOTLY_AVAILABLE:
+                    fig_importance = px.bar(
+                        importance_df,
+                        x='重要性',
+                        y='特征',
+                        orientation='h',
+                        title="特征重要性排序"
+                    )
+                    st.plotly_chart(fig_importance, use_container_width=True)
+                else:
+                    st.warning("⚠️ Plotly未安装，无法显示特征重要性图表")
+                    st.dataframe(importance_df)
             
             # AI解释
             if agent:

@@ -1,9 +1,17 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
 from scipy import stats
+
+# 尝试导入Plotly相关模块
+try:
+    import plotly.express as px
+    import plotly.graph_objects as go
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    PLOTLY_AVAILABLE = False
+    px = None
+    go = None
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
@@ -102,9 +110,13 @@ def data_cleaning_section(df: pd.DataFrame):
             st.dataframe(missing_df)
             
             # 缺失值可视化
-            fig = px.bar(missing_df, x='列名', y='缺失比例(%)', 
-                        title='各列缺失值比例')
-            st.plotly_chart(fig, use_container_width=True)
+            if PLOTLY_AVAILABLE:
+                fig = px.bar(missing_df, x='列名', y='缺失比例(%)', 
+                            title='各列缺失值比例')
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.warning("⚠️ Plotly未安装，无法显示缺失值可视化图表")
+                st.bar_chart(missing_df.set_index('列名')['缺失比例(%)'])
             
             # 处理选项
             st.markdown("### 缺失值处理")
@@ -281,8 +293,17 @@ def data_cleaning_section(df: pd.DataFrame):
                 st.dataframe(outliers)
         
         elif method == "箱线图可视化":
-            fig = px.box(df, y=selected_col, title=f"{selected_col} 箱线图")
-            st.plotly_chart(fig, use_container_width=True)
+            if PLOTLY_AVAILABLE:
+                fig = px.box(df, y=selected_col, title=f"{selected_col} 箱线图")
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.warning("⚠️ Plotly未安装，无法显示箱线图")
+                # 使用matplotlib作为备选
+                import matplotlib.pyplot as plt
+                fig, ax = plt.subplots()
+                ax.boxplot(df[selected_col].dropna())
+                ax.set_title(f"{selected_col} 箱线图")
+                st.pyplot(fig)
             
             # 显示统计信息
             st.markdown("### 统计信息")

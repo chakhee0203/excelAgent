@@ -1,10 +1,18 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import math
+
+# 尝试导入Plotly相关模块
+try:
+    import plotly.express as px
+    import plotly.graph_objects as go
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    PLOTLY_AVAILABLE = False
+    px = None
+    go = None
 
 def table_operations_section(df: pd.DataFrame):
     """数据表格操作功能"""
@@ -166,23 +174,26 @@ def table_operations_section(df: pd.DataFrame):
                     st.dataframe(pivot_table)
                     
                     # 透视表可视化
-                    if columns_col is None:
-                        # 简单柱状图
-                        fig = px.bar(
-                            x=pivot_table.index,
-                            y=pivot_table.values.flatten(),
-                            title=f"{values_col} 按 {index_col} 分组的 {agg_func}"
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
+                    if PLOTLY_AVAILABLE:
+                        if columns_col is None:
+                            # 简单柱状图
+                            fig = px.bar(
+                                x=pivot_table.index,
+                                y=pivot_table.values.flatten(),
+                                title=f"{values_col} 按 {index_col} 分组的 {agg_func}"
+                            )
+                            st.plotly_chart(fig, use_container_width=True)
+                        else:
+                            # 热力图
+                            fig = px.imshow(
+                                pivot_table.values,
+                                x=pivot_table.columns,
+                                y=pivot_table.index,
+                                title="透视表热力图"
+                            )
+                            st.plotly_chart(fig, use_container_width=True)
                     else:
-                        # 热力图
-                        fig = px.imshow(
-                            pivot_table.values,
-                            x=pivot_table.columns,
-                            y=pivot_table.index,
-                            title="透视表热力图"
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.error("⚠️ Plotly未安装，无法显示透视表图表。请运行: pip install plotly")
                     
                     # 保存透视表
                     st.session_state.pivot_table = pivot_table
@@ -313,8 +324,11 @@ def formula_calculator_section(df: pd.DataFrame):
             st.success(f"{selected_col} 的 {stat_func}: {result}")
             
             # 显示数据分布
-            fig = px.histogram(df, x=selected_col, title=f"{selected_col} 分布")
-            st.plotly_chart(fig, use_container_width=True)
+            if PLOTLY_AVAILABLE:
+                fig = px.histogram(df, x=selected_col, title=f"{selected_col} 分布")
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.error("⚠️ Plotly未安装，无法显示分布图。请运行: pip install plotly")
     
     elif calc_type == "财务函数":
         st.markdown("### 💰 财务函数")
@@ -573,31 +587,34 @@ def time_series_analysis_section(df: pd.DataFrame):
             ts_df['移动平均'] = ts_df[value_col].rolling(window=window_size).mean()
             
             # 绘制图表
-            fig = go.Figure()
-            
-            fig.add_trace(go.Scatter(
-                x=ts_df[date_col],
-                y=ts_df[value_col],
-                mode='lines',
-                name='原始数据',
-                line=dict(color='lightblue')
-            ))
-            
-            fig.add_trace(go.Scatter(
-                x=ts_df[date_col],
-                y=ts_df['移动平均'],
-                mode='lines',
-                name=f'{window_size}期移动平均',
-                line=dict(color='red', width=2)
-            ))
-            
-            fig.update_layout(
-                title=f"{value_col} 移动平均分析",
-                xaxis_title="日期",
-                yaxis_title="数值"
-            )
-            
-            st.plotly_chart(fig, use_container_width=True)
+            if PLOTLY_AVAILABLE:
+                fig = go.Figure()
+                
+                fig.add_trace(go.Scatter(
+                    x=ts_df[date_col],
+                    y=ts_df[value_col],
+                    mode='lines',
+                    name='原始数据',
+                    line=dict(color='lightblue')
+                ))
+                
+                fig.add_trace(go.Scatter(
+                    x=ts_df[date_col],
+                    y=ts_df['移动平均'],
+                    mode='lines',
+                    name=f'{window_size}期移动平均',
+                    line=dict(color='red', width=2)
+                ))
+                
+                fig.update_layout(
+                    title=f"{value_col} 移动平均分析",
+                    xaxis_title="日期",
+                    yaxis_title="数值"
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.error("⚠️ Plotly未安装，无法显示移动平均图表。请运行: pip install plotly")
             
             # 移动平均统计
             st.markdown("#### 移动平均统计")
@@ -796,23 +813,29 @@ def dashboard_creation_section(df: pd.DataFrame):
                     # 按类别分组的销售
                     category_sales = df.groupby(category_col)[sales_col].sum().sort_values(ascending=False)
                     
-                    fig_bar = px.bar(
-                        x=category_sales.index,
-                        y=category_sales.values,
-                        title=f"按{category_col}分组的销售额"
-                    )
-                    st.plotly_chart(fig_bar, use_container_width=True)
+                    if PLOTLY_AVAILABLE:
+                        fig_bar = px.bar(
+                            x=category_sales.index,
+                            y=category_sales.values,
+                            title=f"按{category_col}分组的销售额"
+                        )
+                        st.plotly_chart(fig_bar, use_container_width=True)
+                    else:
+                        st.error("⚠️ Plotly未安装，无法显示销售分组图表。请运行: pip install plotly")
                 else:
                     # 销售趋势（如果有足够数据点）
                     if len(df) > 10:
                         df_indexed = df.reset_index()
-                        fig_trend = px.line(
-                            df_indexed,
-                            x='index',
-                            y=sales_col,
-                            title="销售趋势"
-                        )
-                        st.plotly_chart(fig_trend, use_container_width=True)
+                        if PLOTLY_AVAILABLE:
+                            fig_trend = px.line(
+                                df_indexed,
+                                x='index',
+                                y=sales_col,
+                                title="销售趋势"
+                            )
+                            st.plotly_chart(fig_trend, use_container_width=True)
+                        else:
+                            st.error("⚠️ Plotly未安装，无法显示销售趋势图表。请运行: pip install plotly")
             
             # 销售排名（如果有分类列）
             if category_col:
@@ -959,15 +982,18 @@ def report_generation_section(df: pd.DataFrame):
                 st.metric("变异系数", f"{data.std()/data.mean():.2f}")
             
             # 分布图
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                fig_hist = px.histogram(df, x=analysis_col, title=f"{analysis_col} 分布")
-                st.plotly_chart(fig_hist, use_container_width=True)
-            
-            with col2:
-                fig_box = px.box(df, y=analysis_col, title=f"{analysis_col} 箱线图")
-                st.plotly_chart(fig_box, use_container_width=True)
+            if PLOTLY_AVAILABLE:
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    fig_hist = px.histogram(df, x=analysis_col, title=f"{analysis_col} 分布")
+                    st.plotly_chart(fig_hist, use_container_width=True)
+                
+                with col2:
+                    fig_box = px.box(df, y=analysis_col, title=f"{analysis_col} 箱线图")
+                    st.plotly_chart(fig_box, use_container_width=True)
+            else:
+                st.error("⚠️ Plotly未安装，无法显示分布图和箱线图。请运行: pip install plotly")
             
             # 异常值检测
             Q1 = data.quantile(0.25)
